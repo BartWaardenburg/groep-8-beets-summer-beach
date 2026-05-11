@@ -9,14 +9,15 @@
     "lint": "oxlint",
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
-    "analyze": "fallow"
+    "analyze": "fallow",
+    "gen-urls": "node --env-file=.env.local --import tsx scripts/gen-urls.ts"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
     "@phosphor-icons/react": "^2.1.10",
+    "@upstash/redis": "^1.38.0",
     "framer-motion": "^12.38.0",
     "gsap": "^3.15.0",
-    "lottie-react": "^2.4.1",
     "next": "16.2.3",
     "react": "19.2.4",
     "react-dom": "19.2.4"
@@ -26,10 +27,11 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "fallow": "^2.32.1",
+    "fallow": "^2.70.0",
     "oxfmt": "^0.45.0",
     "oxlint": "^1.60.0",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

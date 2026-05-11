@@ -38,7 +38,6 @@ gewoon scrollen en het verhaal ontvouwt zich.
    Tropisch strand met palmen als basis. Daarop animeren los meerdere
    objecten in, elk met een eigen entry-animatie en moment in de scroll
    timeline:
-
    - Flamingo (drijver of staand)
    - Ananas
    - Surfbord

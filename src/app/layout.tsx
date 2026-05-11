@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
-import { Fredoka, DM_Sans } from "next/font/google";
+import { Plus_Jakarta_Sans, Inter } from "next/font/google";
 import "./globals.css";
 
-const fredoka = Fredoka({
-  variable: "--font-fredoka",
+const display = Plus_Jakarta_Sans({
+  variable: "--font-display",
   subsets: ["latin"],
 });
 
-const dmSans = DM_Sans({
-  variable: "--font-dm-sans",
+const body = Inter({
+  variable: "--font-body",
   subsets: ["latin"],
 });
 
@@ -23,7 +23,7 @@ const RootLayout = ({
 }: Readonly<{
   children: React.ReactNode;
 }>) => (
-  <html lang="nl" className={`${fredoka.variable} ${dmSans.variable}`}>
+  <html lang="nl" className={`${display.variable} ${body.variable}`}>
     <body>{children}</body>
   </html>
 );

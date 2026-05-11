@@ -8,13 +8,9 @@
   --forest: #2d6a4f;
 }
 
-@theme inline {
-  --font-display: var(--font-fredoka);
-  --font-body: var(--font-dm-sans);
-}
-
 html {
   scroll-behavior: smooth;
+  font-family: var(--font-body), system-ui, sans-serif;
 }
 
 body {
