@@ -17,6 +17,15 @@ gewoon scrollen en het verhaal ontvouwt zich.
    "Beets groep 8 eindfeest"
    Rustig, ingetogen, nog geen hint van het thema.
 
+   Een schattig cartoon vliegtuigje vliegt langzaam van links naar
+   rechts over het scherm en sleept een banner achter zich aan met de
+   tekst "Beets Groep 8 Eindfeest". Propeller draait, vliegtuigje wiebelt
+   subtiel op en neer, banner wappert iets in de wind. Triggert op
+   mount (niet scroll-gebonden), duurt ongeveer 8 tot 10 seconden zodat
+   de tekst goed leesbaar is. Daarna verdwijnt het vliegtuigje aan de
+   rechterkant en blijft de scene leeg achter, klaar voor de
+   thema-reveal.
+
 2. **Tromgeroffel + thema reveal**
    Geluid van drumroll, korte build-up animatie, dan klapt het thema
    op het scherm.
@@ -26,7 +35,22 @@ gewoon scrollen en het verhaal ontvouwt zich.
    strand in wordt getrokken.
 
 4. **Strand scene**
-   Tropisch strand met flamingo's, palmen, drijvers en speeltjes.
+   Tropisch strand met palmen als basis. Daarop animeren los meerdere
+   objecten in, elk met een eigen entry-animatie en moment in de scroll
+   timeline:
+
+   - Flamingo (drijver of staand)
+   - Ananas
+   - Surfbord
+   - Strandstoel
+   - Poppetje in zwembroek, dat vervolgens de dresscode-accessoires
+     stuk voor stuk aankrijgt:
+     - Hawai-shirt aan
+     - Hawai-slinger om de nek
+     - Glaasje limonade met rietje in de hand
+
+   Het poppetje fungeert dus als dresscode-uitleg: kinderen zien stap
+   voor stoer hoe ze zich kunnen aankleden voor het feest.
    Pixar-stijl, kleurrijk.
 
 5. **Confetti + titel**
