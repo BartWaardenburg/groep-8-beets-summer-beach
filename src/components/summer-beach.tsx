@@ -259,6 +259,115 @@ const HeroCard = ({ countdown }: HeroCardProps) => (
   </section>
 );
 
+type RsvpActionProps = {
+  myKid: string;
+  myRsvp: { emoji: string } | null;
+  selectedEmoji: string | null;
+  submitting: boolean;
+  onSelectEmoji: (emoji: string) => void;
+  onSubmit: () => void;
+};
+
+const RsvpAction = ({
+  myKid,
+  myRsvp,
+  selectedEmoji,
+  submitting,
+  onSelectEmoji,
+  onSubmit,
+}: RsvpActionProps) => {
+  const hint = myRsvp
+    ? `Je bent aangemeld met ${myRsvp.emoji}. Verander je emoji als je wil:`
+    : "Kies een emoji die bij jou past en meld je aan";
+
+  const label = myRsvp
+    ? selectedEmoji && selectedEmoji !== myRsvp.emoji
+      ? `Verander naar ${selectedEmoji}`
+      : "Aangemeld"
+    : `Aanmelden als ${myKid}`;
+
+  const disabled = myRsvp
+    ? !selectedEmoji || selectedEmoji === myRsvp.emoji || submitting
+    : !selectedEmoji || submitting;
+
+  return (
+    <>
+      <ConfettiIcon size={32} weight="duotone" className="mx-auto text-[#E5806A] mb-2" />
+      <p
+        className="text-center text-[10px] md:text-xs font-semibold uppercase tracking-[0.36em] text-[#E5806A] mb-3"
+        style={{ fontFamily: "var(--font-body)" }}
+      >
+        RSVP
+      </p>
+      <h2
+        className="text-3xl md:text-5xl tracking-tight text-center text-[#3D2817] mb-2"
+        style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+      >
+        Hoi {myKid}!
+      </h2>
+      <p
+        className={`text-center mb-7 ${myRsvp ? "text-base text-[#3D2817]" : "text-sm md:text-base text-[#7A5C3E]"}`}
+        style={{ fontFamily: "var(--font-body)" }}
+      >
+        {hint}
+      </p>
+      <EmojiPicker selected={selectedEmoji ?? myRsvp?.emoji ?? null} onSelect={onSelectEmoji} />
+      <SubmitButton label={label} disabled={disabled} onClick={onSubmit} loading={submitting} />
+    </>
+  );
+};
+
+type RsvpGridProps = {
+  rsvps: RsvpMap;
+  myKid: string | null;
+};
+
+const RsvpGrid = ({ rsvps, myKid }: RsvpGridProps) => {
+  const totalRsvpd = Object.keys(rsvps).length;
+  return (
+    <>
+      {!myKid && (
+        <h2
+          className="text-3xl md:text-5xl tracking-tight text-center text-[#3D2817] mb-6"
+          style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+        >
+          Wie komen er?
+        </h2>
+      )}
+      <div className="flex items-baseline justify-between mb-4">
+        <p
+          className="text-[10px] md:text-xs font-semibold uppercase tracking-[0.28em] text-[#7A5C3E]"
+          style={{ fontFamily: "var(--font-body)" }}
+        >
+          {myKid ? "Wie komen er" : "Aangemeld"}
+        </p>
+        <p className="text-xs text-[#7A5C3E]" style={{ fontFamily: "var(--font-body)" }}>
+          {totalRsvpd} / {KIDS.length}
+        </p>
+      </div>
+      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+        {KIDS.map((kid) => {
+          const rsvp = rsvps[kid];
+          const isMe = kid === myKid;
+          return (
+            <div
+              key={kid}
+              className={`relative px-2 py-2.5 rounded-lg text-center transition-all ${
+                rsvp ? "bg-[#3D2817] text-[#FFF8EC]" : "bg-[#F0E2C8] text-[#7A5C3E]"
+              } ${isMe ? "ring-2 ring-[#E5806A] ring-offset-2 ring-offset-[#FFF8EC]" : ""}`}
+            >
+              {rsvp && <span className="absolute -top-2 -right-1 text-xl">{rsvp.emoji}</span>}
+              <span className="text-sm font-medium" style={{ fontFamily: "var(--font-body)" }}>
+                {kid}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+};
+
 type RsvpCardProps = {
   myKid: string | null;
   rsvps: RsvpMap;
@@ -278,8 +387,7 @@ const RsvpCard = ({
   onSelectEmoji,
   onSubmit,
 }: RsvpCardProps) => {
-  const myRsvp = myKid ? rsvps[myKid] : null;
-  const totalRsvpd = Object.keys(rsvps).length;
+  const myRsvp = myKid ? (rsvps[myKid] ?? null) : null;
 
   return (
     <section className="relative pt-8 pb-24 px-5 flex items-center justify-center">
@@ -292,102 +400,26 @@ const RsvpCard = ({
       >
         {myKid && (
           <>
-            <ConfettiIcon size={32} weight="duotone" className="mx-auto text-[#E5806A] mb-2" />
-            <p
-              className="text-center text-[10px] md:text-xs font-semibold uppercase tracking-[0.36em] text-[#E5806A] mb-3"
-              style={{ fontFamily: "var(--font-body)" }}
-            >
-              RSVP
-            </p>
+            <RsvpAction
+              myKid={myKid}
+              myRsvp={myRsvp}
+              selectedEmoji={selectedEmoji}
+              submitting={submitting}
+              onSelectEmoji={onSelectEmoji}
+              onSubmit={onSubmit}
+            />
+            {error && (
+              <p
+                className="text-center text-sm text-red-600 mt-3"
+                style={{ fontFamily: "var(--font-body)" }}
+              >
+                {error}
+              </p>
+            )}
+            <div className="my-8 border-t border-dashed border-[#3D2817]/15" />
           </>
         )}
-        <h2
-          className="text-3xl md:text-5xl tracking-tight text-center text-[#3D2817] mb-2"
-          style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
-        >
-          {myKid ? `Hoi ${myKid}!` : "Wie komen er?"}
-        </h2>
-
-        {myKid &&
-          (myRsvp ? (
-            <>
-              <p
-                className="text-center text-base text-[#3D2817] mb-7"
-                style={{ fontFamily: "var(--font-body)" }}
-              >
-                Je bent aangemeld met {myRsvp.emoji}. Verander je emoji als je wil:
-              </p>
-              <EmojiPicker selected={selectedEmoji ?? myRsvp.emoji} onSelect={onSelectEmoji} />
-              <SubmitButton
-                label={
-                  selectedEmoji && selectedEmoji !== myRsvp.emoji
-                    ? `Verander naar ${selectedEmoji}`
-                    : "Aangemeld"
-                }
-                disabled={!selectedEmoji || selectedEmoji === myRsvp.emoji || submitting}
-                onClick={onSubmit}
-                loading={submitting}
-              />
-            </>
-          ) : (
-            <>
-              <p
-                className="text-center text-sm md:text-base text-[#7A5C3E] mb-7"
-                style={{ fontFamily: "var(--font-body)" }}
-              >
-                Kies een emoji die bij jou past en meld je aan
-              </p>
-              <EmojiPicker selected={selectedEmoji} onSelect={onSelectEmoji} />
-              <SubmitButton
-                label={`Aanmelden als ${myKid}`}
-                disabled={!selectedEmoji || submitting}
-                onClick={onSubmit}
-                loading={submitting}
-              />
-            </>
-          ))}
-
-        {error && (
-          <p
-            className="text-center text-sm text-red-600 mt-3"
-            style={{ fontFamily: "var(--font-body)" }}
-          >
-            {error}
-          </p>
-        )}
-
-        {myKid && <div className="my-8 border-t border-dashed border-[#3D2817]/15" />}
-
-        <div className={`flex items-baseline justify-between mb-4 ${myKid ? "" : "mt-6"}`}>
-          <p
-            className="text-[10px] md:text-xs font-semibold uppercase tracking-[0.28em] text-[#7A5C3E]"
-            style={{ fontFamily: "var(--font-body)" }}
-          >
-            {myKid ? "Wie komen er" : "Aangemeld"}
-          </p>
-          <p className="text-xs text-[#7A5C3E]" style={{ fontFamily: "var(--font-body)" }}>
-            {totalRsvpd} / {KIDS.length}
-          </p>
-        </div>
-        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-          {KIDS.map((kid) => {
-            const rsvp = rsvps[kid];
-            const isMe = kid === myKid;
-            return (
-              <div
-                key={kid}
-                className={`relative px-2 py-2.5 rounded-lg text-center transition-all ${
-                  rsvp ? "bg-[#3D2817] text-[#FFF8EC]" : "bg-[#F0E2C8] text-[#7A5C3E]"
-                } ${isMe ? "ring-2 ring-[#E5806A] ring-offset-2 ring-offset-[#FFF8EC]" : ""}`}
-              >
-                {rsvp && <span className="absolute -top-2 -right-1 text-xl">{rsvp.emoji}</span>}
-                <span className="text-sm font-medium" style={{ fontFamily: "var(--font-body)" }}>
-                  {kid}
-                </span>
-              </div>
-            );
-          })}
-        </div>
+        <RsvpGrid rsvps={rsvps} myKid={myKid} />
       </motion.div>
     </section>
   );
