@@ -290,22 +290,30 @@ const RsvpCard = ({
         transition={{ duration: 0.8 }}
         className="w-full max-w-2xl mx-auto bg-[#FFF8EC] rounded-[28px] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.7)] p-8 md:p-12"
       >
-        <ConfettiIcon size={32} weight="duotone" className="mx-auto text-[#E5806A] mb-2" />
-        <p
-          className="text-center text-[10px] md:text-xs font-semibold uppercase tracking-[0.36em] text-[#E5806A] mb-3"
-          style={{ fontFamily: "var(--font-body)" }}
-        >
-          RSVP
-        </p>
+        {myKid && (
+          <>
+            <ConfettiIcon
+              size={32}
+              weight="duotone"
+              className="mx-auto text-[#E5806A] mb-2"
+            />
+            <p
+              className="text-center text-[10px] md:text-xs font-semibold uppercase tracking-[0.36em] text-[#E5806A] mb-3"
+              style={{ fontFamily: "var(--font-body)" }}
+            >
+              RSVP
+            </p>
+          </>
+        )}
         <h2
           className="text-3xl md:text-5xl tracking-tight text-center text-[#3D2817] mb-2"
           style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
         >
-          {myKid ? `Hoi ${myKid}!` : "Kom jij ook?"}
+          {myKid ? `Hoi ${myKid}!` : "Wie komen er?"}
         </h2>
 
-        {myKid ? (
-          myRsvp ? (
+        {myKid &&
+          (myRsvp ? (
             <>
               <p
                 className="text-center text-base text-[#3D2817] mb-7"
@@ -341,15 +349,7 @@ const RsvpCard = ({
                 loading={submitting}
               />
             </>
-          )
-        ) : (
-          <p
-            className="text-center text-sm md:text-base text-[#7A5C3E] mb-8 max-w-sm mx-auto"
-            style={{ fontFamily: "var(--font-body)" }}
-          >
-            Scan jouw eigen QR-code op het kaartje om je aan te melden
-          </p>
-        )}
+          ))}
 
         {error && (
           <p
@@ -360,14 +360,16 @@ const RsvpCard = ({
           </p>
         )}
 
-        <div className="my-8 border-t border-dashed border-[#3D2817]/15" />
+        {myKid && <div className="my-8 border-t border-dashed border-[#3D2817]/15" />}
 
-        <div className="flex items-baseline justify-between mb-4">
+        <div
+          className={`flex items-baseline justify-between mb-4 ${myKid ? "" : "mt-6"}`}
+        >
           <p
             className="text-[10px] md:text-xs font-semibold uppercase tracking-[0.28em] text-[#7A5C3E]"
             style={{ fontFamily: "var(--font-body)" }}
           >
-            Wie komen er
+            {myKid ? "Wie komen er" : "Aangemeld"}
           </p>
           <p className="text-xs text-[#7A5C3E]" style={{ fontFamily: "var(--font-body)" }}>
             {totalRsvpd} / {KIDS.length}
