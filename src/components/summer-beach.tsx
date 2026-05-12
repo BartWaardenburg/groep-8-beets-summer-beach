@@ -292,11 +292,7 @@ const RsvpCard = ({
       >
         {myKid && (
           <>
-            <ConfettiIcon
-              size={32}
-              weight="duotone"
-              className="mx-auto text-[#E5806A] mb-2"
-            />
+            <ConfettiIcon size={32} weight="duotone" className="mx-auto text-[#E5806A] mb-2" />
             <p
               className="text-center text-[10px] md:text-xs font-semibold uppercase tracking-[0.36em] text-[#E5806A] mb-3"
               style={{ fontFamily: "var(--font-body)" }}
@@ -362,9 +358,7 @@ const RsvpCard = ({
 
         {myKid && <div className="my-8 border-t border-dashed border-[#3D2817]/15" />}
 
-        <div
-          className={`flex items-baseline justify-between mb-4 ${myKid ? "" : "mt-6"}`}
-        >
+        <div className={`flex items-baseline justify-between mb-4 ${myKid ? "" : "mt-6"}`}>
           <p
             className="text-[10px] md:text-xs font-semibold uppercase tracking-[0.28em] text-[#7A5C3E]"
             style={{ fontFamily: "var(--font-body)" }}
