@@ -1,36 +1,102 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Beets Groep 8 Eindfeest
 
-## Getting Started
+Persoonlijke RSVP-site voor het Groep 8 eindfeest. Iedere kind krijgt
+een eigen QR-code, scant 'm en doorloopt een scroll-gedreven Pixar-
+intro die eindigt op een save-the-date kaart met countdown en RSVP.
+Aangemelde kids zien hun emoji bij hun naam in een groepsoverzicht.
 
-First, run the development server:
+Live: https://beets-eindfeest.vercel.app
+
+## Stack
+
+- Next.js 16 (App Router) op Vercel met Fluid Compute
+- GSAP ScrollTrigger voor de scroll-gedreven video scrub
+- Upstash Redis (via Vercel Marketplace) als RSVP store
+- Plus Jakarta Sans + Inter, Phosphor icons, Tailwind v4
+- Vitest voor unit tests
+
+## Lokaal draaien
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+vercel env pull .env.local      # eenmalig, haalt Upstash + RSVP_SALT
+npm run dev                     # http://localhost:3001
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Zonder `.env.local` werkt de site nog steeds, maar de RSVP store valt
+terug op een in-memory map die resets bij iedere reload.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## URLs en QR codes genereren
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Iedere kind heeft een eigen `?code=<hash>` link, afgeleid van zijn naam
+en de `RSVP_SALT` env var (server-side only). De codes zijn stabiel
+zolang `RSVP_SALT` niet verandert.
 
-## Learn More
+```bash
+# Lokale URLs (voor testen)
+npm run gen-urls
 
-To learn more about Next.js, take a look at the following resources:
+# Productie URLs + QR PNGs voor op de fysieke kaartjes
+BASE_URL=https://beets-eindfeest.vercel.app npm run gen-urls
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Resultaat in `./out/`:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `urls.csv` voor spreadsheet / mail merge
+- `urls.md` markdown tabel
+- `qr/<Naam>.png` per kind, 800px, chocolate op cream
 
-## Deploy on Vercel
+## RSVPs bekijken
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+curl -s https://beets-eindfeest.vercel.app/api/rsvps | jq
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Of open een willekeurige kind-URL: het overzicht onderaan toont wie er
+al aangemeld is (de pagina pollt elke 5s).
+
+## Deploy
+
+Iedere push naar `main` triggert een Vercel build. Na het renamen van
+het project moet de productie-alias soms handmatig op de nieuwe deploy
+gezet worden:
+
+```bash
+vercel ls | awk 'NR==7'                                             # nieuwste deploy
+vercel alias set <deploy-url> beets-eindfeest.vercel.app            # als stale
+```
+
+## Tests
+
+```bash
+npm test         # vitest run
+npm run lint     # oxlint
+npm run analyze  # fallow code health
+```
+
+## Configuratie
+
+| Env var             | Waar                        | Wat                                                        |
+| ------------------- | --------------------------- | ---------------------------------------------------------- |
+| `RSVP_SALT`         | Production, Development     | Random hex string voor HMAC, bepaalt de stabiele kid codes |
+| `KV_REST_API_URL`   | Auto via Upstash integratie | Upstash Redis REST endpoint                                |
+| `KV_REST_API_TOKEN` | Auto via Upstash integratie | Upstash auth token                                         |
+
+## Wijzig de gastenlijst
+
+Voeg of verwijder kids in `src/lib/kids.ts`. Codes worden automatisch
+opnieuw afgeleid, dus genereer daarna nieuwe URLs + QR codes:
+
+```bash
+BASE_URL=https://beets-eindfeest.vercel.app npm run gen-urls
+```
+
+## Geheim houden
+
+Het thema (Summer Beach) is bedoeld als verrassing tot na het
+scannen. De Vercel project-URL is daarom hernoemd naar
+`beets-eindfeest`. Voorzichtig met:
+
+- Repo-naam: blijft `groep-8-beets-summer-beach.git` op GitHub
+- `.vercel/project.json`: bevat de nieuwe naam
+- Public meta tags: check `src/app/layout.tsx` voor lekken
