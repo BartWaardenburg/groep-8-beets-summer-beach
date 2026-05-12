@@ -293,10 +293,14 @@ export const SummerBeach = () => {
       {/* ===== Fixed video backdrop (scroll-scrubbed, freezes at last frame) ===== */}
       <video
         ref={videoRef}
-        src="/beach.mp4"
+        src="/beach.mp4#t=0.001"
+        poster="/beach-poster.jpg"
+        autoPlay
         muted
         playsInline
         preload="auto"
+        disablePictureInPicture
+        disableRemotePlayback
         className="fixed inset-0 w-full h-full object-cover -z-10 bg-black"
       />
 
