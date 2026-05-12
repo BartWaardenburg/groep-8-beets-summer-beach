@@ -235,6 +235,33 @@ export const SummerBeach = () => {
 
     const setup = () => {
       setScrubHeight(Math.round(video.duration * 120));
+      // iOS Safari/Chrome: prime the decoder so currentTime updates render frames.
+      // Without this the video stays on the first frame (black) during scrub.
+      let primed = false;
+      const prime = async () => {
+        if (primed) return;
+        try {
+          await video.play();
+          video.pause();
+          video.currentTime = 0;
+          primed = true;
+        } catch {
+          // ignore, will retry on first user interaction
+        }
+      };
+      prime();
+      const onFirst = () => {
+        prime();
+      };
+      document.addEventListener("touchstart", onFirst, {
+        passive: true,
+        once: true,
+      });
+      document.addEventListener("click", onFirst, {
+        passive: true,
+        once: true,
+      });
+
       gsap.to(video, {
         currentTime: video.duration,
         ease: "none",
@@ -247,8 +274,8 @@ export const SummerBeach = () => {
       });
     };
 
-    if (video.readyState >= 1) setup();
-    else video.addEventListener("loadedmetadata", setup, { once: true });
+    if (video.readyState >= 2) setup();
+    else video.addEventListener("loadeddata", setup, { once: true });
   });
 
   const countdown = [
