@@ -604,24 +604,21 @@ export const SummerBeach = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.5, delay: 0.6 }}
-            className="fixed bottom-8 md:bottom-12 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-1.5 text-[#FFF8EC] pointer-events-none"
-            style={{ textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}
+            className="fixed bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 rounded-full bg-[#FFF8EC]/95 backdrop-blur-md text-[#3D2817] shadow-[0_8px_28px_rgba(0,0,0,0.4)] px-5 py-2.5 pointer-events-none"
+            style={{ fontFamily: "var(--font-body)" }}
           >
-            <span
-              className="text-[10px] font-semibold uppercase tracking-[0.32em]"
-              style={{ fontFamily: "var(--font-body)" }}
-            >
+            <span className="text-[10px] font-semibold uppercase tracking-[0.32em]">
               Scroll
             </span>
             <motion.div
-              animate={{ y: [0, 6, 0] }}
+              animate={{ y: [0, 4, 0] }}
               transition={{
                 duration: 1.4,
                 repeat: Infinity,
                 ease: "easeInOut",
               }}
             >
-              <CaretDown size={22} weight="bold" />
+              <CaretDown size={18} weight="bold" />
             </motion.div>
           </motion.div>
         )}
