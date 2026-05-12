@@ -6,13 +6,50 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  CaretDown,
   Clock,
   Confetti as ConfettiIcon,
   DeviceMobile,
+  HandArrowDown,
   MapPin,
   SunHorizon,
 } from "@phosphor-icons/react";
+
+const ScrollMouse = () => (
+  <div className="relative w-[14px] h-[22px] rounded-full border-[1.5px] border-current">
+    <motion.span
+      aria-hidden="true"
+      className="absolute left-1/2 -translate-x-1/2 top-[3px] w-[3px] h-[6px] rounded-full bg-current"
+      animate={{ y: [0, 8, 8], opacity: [1, 0, 0] }}
+      transition={{
+        duration: 1.6,
+        repeat: Infinity,
+        ease: "easeIn",
+        times: [0, 0.6, 1],
+      }}
+    />
+  </div>
+);
+
+const SwipeHand = () => (
+  <motion.div
+    aria-hidden="true"
+    animate={{ y: [0, -3, 0] }}
+    transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+  >
+    <HandArrowDown size={20} weight="duotone" />
+  </motion.div>
+);
+
+const ScrollCue = () => (
+  <>
+    <span className="md:hidden">
+      <SwipeHand />
+    </span>
+    <span className="hidden md:inline-flex">
+      <ScrollMouse />
+    </span>
+  </>
+);
 import { EMOJIS, KIDS, type RsvpMap } from "@/lib/kids";
 
 if (typeof window !== "undefined") {
@@ -610,16 +647,7 @@ export const SummerBeach = () => {
             <span className="text-[10px] font-semibold uppercase tracking-[0.32em]">
               Scroll
             </span>
-            <motion.div
-              animate={{ y: [0, 4, 0] }}
-              transition={{
-                duration: 1.4,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            >
-              <CaretDown size={18} weight="bold" />
-            </motion.div>
+            <ScrollCue />
           </motion.div>
         )}
       </AnimatePresence>
