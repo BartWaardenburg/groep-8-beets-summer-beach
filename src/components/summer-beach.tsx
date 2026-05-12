@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
+  CaretDown,
   Clock,
   Confetti as ConfettiIcon,
   DeviceMobile,
@@ -166,7 +167,14 @@ export const SummerBeach = () => {
   const [rsvps, setRsvps] = useState<RsvpMap>({});
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [scrolled, setScrolled] = useState(false);
   const { d, h, m, s } = useCountdown(PARTY_DATE);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 0);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     const code = new URLSearchParams(window.location.search).get("code");
@@ -303,6 +311,37 @@ export const SummerBeach = () => {
         disableRemotePlayback
         className="fixed inset-0 w-full h-full object-cover -z-10 bg-black"
       />
+
+      {/* ===== Scroll-down hint: shown only on the first frame ===== */}
+      <AnimatePresence>
+        {!scrolled && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+            className="fixed bottom-8 md:bottom-12 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-1.5 text-[#FFF8EC] pointer-events-none"
+            style={{ textShadow: "0 2px 12px rgba(0,0,0,0.5)" }}
+          >
+            <span
+              className="text-[10px] font-semibold uppercase tracking-[0.32em]"
+              style={{ fontFamily: "var(--font-body)" }}
+            >
+              Scroll
+            </span>
+            <motion.div
+              animate={{ y: [0, 6, 0] }}
+              transition={{
+                duration: 1.4,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            >
+              <CaretDown size={22} weight="bold" />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ===== Subtle vignette for depth ===== */}
       <div
