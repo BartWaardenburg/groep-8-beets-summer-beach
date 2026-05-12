@@ -138,6 +138,265 @@ const SubmitButton = ({ label, disabled, loading, onClick }: SubmitButtonProps) 
   </motion.button>
 );
 
+type CountdownItem = { value: number; label: string };
+
+type HeroCardProps = {
+  countdown: CountdownItem[];
+};
+
+const TICKET_NOTCH_BOTTOM = {
+  maskImage:
+    "radial-gradient(circle 22px at 0% 100%, transparent 21px, #000 22px), radial-gradient(circle 22px at 100% 100%, transparent 21px, #000 22px)",
+  WebkitMaskImage:
+    "radial-gradient(circle 22px at 0% 100%, transparent 21px, #000 22px), radial-gradient(circle 22px at 100% 100%, transparent 21px, #000 22px)",
+  maskComposite: "intersect" as const,
+  WebkitMaskComposite: "source-in" as const,
+  filter: "drop-shadow(0 20px 50px rgba(0,0,0,0.5)) drop-shadow(0 8px 20px rgba(0,0,0,0.3))",
+};
+
+const TICKET_NOTCH_TOP = {
+  maskImage:
+    "radial-gradient(circle 22px at 0% 0%, transparent 21px, #000 22px), radial-gradient(circle 22px at 100% 0%, transparent 21px, #000 22px)",
+  WebkitMaskImage:
+    "radial-gradient(circle 22px at 0% 0%, transparent 21px, #000 22px), radial-gradient(circle 22px at 100% 0%, transparent 21px, #000 22px)",
+  maskComposite: "intersect" as const,
+  WebkitMaskComposite: "source-in" as const,
+  filter: "drop-shadow(0 20px 50px rgba(0,0,0,0.5)) drop-shadow(0 8px 20px rgba(0,0,0,0.3))",
+};
+
+const HeroCard = ({ countdown }: HeroCardProps) => (
+  <section className="relative pt-20 md:pt-28 pb-10 px-5">
+    <motion.div
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.8 }}
+      className="max-w-2xl mx-auto"
+    >
+      <div className="bg-[#FFF8EC] rounded-t-[28px] text-center" style={TICKET_NOTCH_BOTTOM}>
+        <div className="px-8 md:px-12 pt-10 md:pt-12 pb-10">
+          <SunHorizon size={32} weight="duotone" className="mx-auto text-[#E5806A] mb-3" />
+          <p
+            className="text-[10px] md:text-xs font-semibold uppercase tracking-[0.36em] text-[#E5806A] mb-6"
+            style={{ fontFamily: "var(--font-body)" }}
+          >
+            Save the date
+          </p>
+          <p
+            className="text-xs md:text-sm font-semibold uppercase tracking-[0.32em] text-[#7A5C3E] mb-3"
+            style={{ fontFamily: "var(--font-body)" }}
+          >
+            Woensdag
+          </p>
+          <h1
+            className="text-6xl md:text-8xl tracking-tight text-[#3D2817] leading-none flex items-center justify-center gap-3 md:gap-4"
+            style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+          >
+            <span>15</span>
+            <span className="text-[#E5806A]">·</span>
+            <span>07</span>
+            <span className="text-[#E5806A]">·</span>
+            <span>26</span>
+          </h1>
+          <div className="flex items-center justify-center gap-4 mt-7 text-[#7A5C3E]">
+            <span
+              className="flex items-center gap-1.5 text-sm md:text-base"
+              style={{ fontFamily: "var(--font-body)" }}
+            >
+              <MapPin size={16} weight="duotone" />
+              De Conckelaer
+            </span>
+            <span className="w-1 h-1 rounded-full bg-[#7A5C3E]/40" />
+            <span
+              className="flex items-center gap-1.5 text-sm md:text-base"
+              style={{ fontFamily: "var(--font-body)" }}
+            >
+              <Clock size={16} weight="duotone" />
+              Vanaf 19:00
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="border-t-[4px] border-dotted border-[#3D2817]/50 mx-[22px]" />
+
+      <div className="bg-[#FFF8EC] rounded-b-[28px]" style={TICKET_NOTCH_TOP}>
+        <div className="px-6 md:px-10 pt-10 pb-10 md:pb-12">
+          <p
+            className="text-center text-[10px] md:text-xs font-semibold uppercase tracking-[0.28em] text-[#7A5C3E] mb-5"
+            style={{ fontFamily: "var(--font-body)" }}
+          >
+            Nog te gaan
+          </p>
+          <div className="grid grid-cols-4 gap-2 md:gap-4">
+            {countdown.map(({ value, label }, i) => (
+              <motion.div
+                key={label}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3 + i * 0.08, duration: 0.5 }}
+                className="flex flex-col items-center text-center"
+              >
+                <div
+                  className="w-full aspect-square rounded-xl bg-[#F0E2C8] flex items-center justify-center text-3xl md:text-5xl text-[#3D2817]"
+                  style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+                >
+                  {String(value).padStart(2, "0")}
+                </div>
+                <span
+                  className="mt-2 text-[9px] md:text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7A5C3E]"
+                  style={{ fontFamily: "var(--font-body)" }}
+                >
+                  {label}
+                </span>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  </section>
+);
+
+type RsvpCardProps = {
+  myKid: string | null;
+  rsvps: RsvpMap;
+  selectedEmoji: string | null;
+  submitting: boolean;
+  error: string | null;
+  onSelectEmoji: (emoji: string) => void;
+  onSubmit: () => void;
+};
+
+const RsvpCard = ({
+  myKid,
+  rsvps,
+  selectedEmoji,
+  submitting,
+  error,
+  onSelectEmoji,
+  onSubmit,
+}: RsvpCardProps) => {
+  const myRsvp = myKid ? rsvps[myKid] : null;
+  const totalRsvpd = Object.keys(rsvps).length;
+
+  return (
+    <section className="relative pt-8 pb-24 px-5 flex items-center justify-center">
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.8 }}
+        className="w-full max-w-2xl mx-auto bg-[#FFF8EC] rounded-[28px] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.7)] p-8 md:p-12"
+      >
+        <ConfettiIcon size={32} weight="duotone" className="mx-auto text-[#E5806A] mb-2" />
+        <p
+          className="text-center text-[10px] md:text-xs font-semibold uppercase tracking-[0.36em] text-[#E5806A] mb-3"
+          style={{ fontFamily: "var(--font-body)" }}
+        >
+          RSVP
+        </p>
+        <h2
+          className="text-3xl md:text-5xl tracking-tight text-center text-[#3D2817] mb-2"
+          style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+        >
+          {myKid ? `Hoi ${myKid}!` : "Kom jij ook?"}
+        </h2>
+
+        {myKid ? (
+          myRsvp ? (
+            <>
+              <p
+                className="text-center text-base text-[#3D2817] mb-7"
+                style={{ fontFamily: "var(--font-body)" }}
+              >
+                Je bent aangemeld met {myRsvp.emoji}. Verander je emoji als je wil:
+              </p>
+              <EmojiPicker selected={selectedEmoji ?? myRsvp.emoji} onSelect={onSelectEmoji} />
+              <SubmitButton
+                label={
+                  selectedEmoji && selectedEmoji !== myRsvp.emoji
+                    ? `Verander naar ${selectedEmoji}`
+                    : "Aangemeld"
+                }
+                disabled={!selectedEmoji || selectedEmoji === myRsvp.emoji || submitting}
+                onClick={onSubmit}
+                loading={submitting}
+              />
+            </>
+          ) : (
+            <>
+              <p
+                className="text-center text-sm md:text-base text-[#7A5C3E] mb-7"
+                style={{ fontFamily: "var(--font-body)" }}
+              >
+                Kies een emoji die bij jou past en meld je aan
+              </p>
+              <EmojiPicker selected={selectedEmoji} onSelect={onSelectEmoji} />
+              <SubmitButton
+                label={`Aanmelden als ${myKid}`}
+                disabled={!selectedEmoji || submitting}
+                onClick={onSubmit}
+                loading={submitting}
+              />
+            </>
+          )
+        ) : (
+          <p
+            className="text-center text-sm md:text-base text-[#7A5C3E] mb-8 max-w-sm mx-auto"
+            style={{ fontFamily: "var(--font-body)" }}
+          >
+            Scan jouw eigen QR-code op het kaartje om je aan te melden
+          </p>
+        )}
+
+        {error && (
+          <p
+            className="text-center text-sm text-red-600 mt-3"
+            style={{ fontFamily: "var(--font-body)" }}
+          >
+            {error}
+          </p>
+        )}
+
+        <div className="my-8 border-t border-dashed border-[#3D2817]/15" />
+
+        <div className="flex items-baseline justify-between mb-4">
+          <p
+            className="text-[10px] md:text-xs font-semibold uppercase tracking-[0.28em] text-[#7A5C3E]"
+            style={{ fontFamily: "var(--font-body)" }}
+          >
+            Wie komen er
+          </p>
+          <p className="text-xs text-[#7A5C3E]" style={{ fontFamily: "var(--font-body)" }}>
+            {totalRsvpd} / {KIDS.length}
+          </p>
+        </div>
+        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+          {KIDS.map((kid) => {
+            const rsvp = rsvps[kid];
+            const isMe = kid === myKid;
+            return (
+              <div
+                key={kid}
+                className={`relative px-2 py-2.5 rounded-lg text-center transition-all ${
+                  rsvp ? "bg-[#3D2817] text-[#FFF8EC]" : "bg-[#F0E2C8] text-[#7A5C3E]"
+                } ${isMe ? "ring-2 ring-[#E5806A] ring-offset-2 ring-offset-[#FFF8EC]" : ""}`}
+              >
+                {rsvp && <span className="absolute -top-2 -right-1 text-xl">{rsvp.emoji}</span>}
+                <span className="text-sm font-medium" style={{ fontFamily: "var(--font-body)" }}>
+                  {kid}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </motion.div>
+    </section>
+  );
+};
+
 const Confetti = () => (
   <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden">
     {Array.from({ length: 60 }, (_, i) => (
@@ -203,9 +462,6 @@ export const SummerBeach = () => {
     const id = setInterval(load, 5000);
     return () => clearInterval(id);
   }, []);
-
-  const myRsvp = myKid ? rsvps[myKid] : null;
-  const totalRsvpd = Object.keys(rsvps).length;
 
   const handleSubmit = async () => {
     if (!myCode || !selectedEmoji || submitting) return;
@@ -361,251 +617,16 @@ export const SummerBeach = () => {
 
       {/* ===== Content sections, slide in from below once video is done ===== */}
       <div className="relative">
-        {/* ===== Hero card: Save the date ===== */}
-        <section className="relative pt-20 md:pt-28 pb-10 px-5">
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="max-w-2xl mx-auto"
-          >
-            {/* Top half of card with notches on bottom corners */}
-            <div
-              className="bg-[#FFF8EC] rounded-t-[28px] text-center"
-              style={{
-                maskImage:
-                  "radial-gradient(circle 22px at 0% 100%, transparent 21px, #000 22px), radial-gradient(circle 22px at 100% 100%, transparent 21px, #000 22px)",
-                WebkitMaskImage:
-                  "radial-gradient(circle 22px at 0% 100%, transparent 21px, #000 22px), radial-gradient(circle 22px at 100% 100%, transparent 21px, #000 22px)",
-                maskComposite: "intersect",
-                WebkitMaskComposite: "source-in",
-                filter:
-                  "drop-shadow(0 20px 50px rgba(0,0,0,0.5)) drop-shadow(0 8px 20px rgba(0,0,0,0.3))",
-              }}
-            >
-              <div className="px-8 md:px-12 pt-10 md:pt-12 pb-10">
-                <SunHorizon size={32} weight="duotone" className="mx-auto text-[#E5806A] mb-3" />
-                <p
-                  className="text-[10px] md:text-xs font-semibold uppercase tracking-[0.36em] text-[#E5806A] mb-6"
-                  style={{ fontFamily: "var(--font-body)" }}
-                >
-                  Save the date
-                </p>
-                <p
-                  className="text-xs md:text-sm font-semibold uppercase tracking-[0.32em] text-[#7A5C3E] mb-3"
-                  style={{ fontFamily: "var(--font-body)" }}
-                >
-                  Woensdag
-                </p>
-                <h1
-                  className="text-6xl md:text-8xl tracking-tight text-[#3D2817] leading-none flex items-center justify-center gap-3 md:gap-4"
-                  style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
-                >
-                  <span>15</span>
-                  <span className="text-[#E5806A]">·</span>
-                  <span>07</span>
-                  <span className="text-[#E5806A]">·</span>
-                  <span>26</span>
-                </h1>
-                <div className="flex items-center justify-center gap-4 mt-7 text-[#7A5C3E]">
-                  <span
-                    className="flex items-center gap-1.5 text-sm md:text-base"
-                    style={{ fontFamily: "var(--font-body)" }}
-                  >
-                    <MapPin size={16} weight="duotone" />
-                    De Conckelaer
-                  </span>
-                  <span className="w-1 h-1 rounded-full bg-[#7A5C3E]/40" />
-                  <span
-                    className="flex items-center gap-1.5 text-sm md:text-base"
-                    style={{ fontFamily: "var(--font-body)" }}
-                  >
-                    <Clock size={16} weight="duotone" />
-                    Vanaf 19:00
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Dotted perforation line directly between halves, stops at notches */}
-            <div className="border-t-[4px] border-dotted border-[#3D2817]/50 mx-[22px]" />
-
-            {/* Bottom half of card with notches on top corners */}
-            <div
-              className="bg-[#FFF8EC] rounded-b-[28px]"
-              style={{
-                maskImage:
-                  "radial-gradient(circle 22px at 0% 0%, transparent 21px, #000 22px), radial-gradient(circle 22px at 100% 0%, transparent 21px, #000 22px)",
-                WebkitMaskImage:
-                  "radial-gradient(circle 22px at 0% 0%, transparent 21px, #000 22px), radial-gradient(circle 22px at 100% 0%, transparent 21px, #000 22px)",
-                maskComposite: "intersect",
-                WebkitMaskComposite: "source-in",
-                filter:
-                  "drop-shadow(0 20px 50px rgba(0,0,0,0.5)) drop-shadow(0 8px 20px rgba(0,0,0,0.3))",
-              }}
-            >
-              <div className="px-6 md:px-10 pt-10 pb-10 md:pb-12">
-                <p
-                  className="text-center text-[10px] md:text-xs font-semibold uppercase tracking-[0.28em] text-[#7A5C3E] mb-5"
-                  style={{ fontFamily: "var(--font-body)" }}
-                >
-                  Nog te gaan
-                </p>
-                <div className="grid grid-cols-4 gap-2 md:gap-4">
-                  {countdown.map(({ value, label }, i) => (
-                    <motion.div
-                      key={label}
-                      initial={{ opacity: 0, y: 20 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: 0.3 + i * 0.08, duration: 0.5 }}
-                      className="flex flex-col items-center text-center"
-                    >
-                      <div
-                        className="w-full aspect-square rounded-xl bg-[#F0E2C8] flex items-center justify-center text-3xl md:text-5xl text-[#3D2817]"
-                        style={{
-                          fontFamily: "var(--font-display)",
-                          fontWeight: 600,
-                        }}
-                      >
-                        {String(value).padStart(2, "0")}
-                      </div>
-                      <span
-                        className="mt-2 text-[9px] md:text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7A5C3E]"
-                        style={{ fontFamily: "var(--font-body)" }}
-                      >
-                        {label}
-                      </span>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </section>
-
-        {/* ===== RSVP card ===== */}
-        <section className="relative pt-8 pb-24 px-5 flex items-center justify-center">
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="w-full max-w-2xl mx-auto bg-[#FFF8EC] rounded-[28px] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.7)] p-8 md:p-12"
-          >
-            <ConfettiIcon size={32} weight="duotone" className="mx-auto text-[#E5806A] mb-2" />
-            <p
-              className="text-center text-[10px] md:text-xs font-semibold uppercase tracking-[0.36em] text-[#E5806A] mb-3"
-              style={{ fontFamily: "var(--font-body)" }}
-            >
-              RSVP
-            </p>
-            <h2
-              className="text-3xl md:text-5xl tracking-tight text-center text-[#3D2817] mb-2"
-              style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
-            >
-              {myKid ? `Hoi ${myKid}!` : "Kom jij ook?"}
-            </h2>
-
-            {myKid ? (
-              myRsvp ? (
-                <>
-                  <p
-                    className="text-center text-base text-[#3D2817] mb-7"
-                    style={{ fontFamily: "var(--font-body)" }}
-                  >
-                    Je bent aangemeld met {myRsvp.emoji}. Verander je emoji als je wil:
-                  </p>
-                  <EmojiPicker
-                    selected={selectedEmoji ?? myRsvp.emoji}
-                    onSelect={setSelectedEmoji}
-                  />
-                  <SubmitButton
-                    label={
-                      selectedEmoji && selectedEmoji !== myRsvp.emoji
-                        ? `Verander naar ${selectedEmoji}`
-                        : "Aangemeld"
-                    }
-                    disabled={!selectedEmoji || selectedEmoji === myRsvp.emoji || submitting}
-                    onClick={handleSubmit}
-                    loading={submitting}
-                  />
-                </>
-              ) : (
-                <>
-                  <p
-                    className="text-center text-sm md:text-base text-[#7A5C3E] mb-7"
-                    style={{ fontFamily: "var(--font-body)" }}
-                  >
-                    Kies een emoji die bij jou past en meld je aan
-                  </p>
-                  <EmojiPicker selected={selectedEmoji} onSelect={setSelectedEmoji} />
-                  <SubmitButton
-                    label={`Aanmelden als ${myKid}`}
-                    disabled={!selectedEmoji || submitting}
-                    onClick={handleSubmit}
-                    loading={submitting}
-                  />
-                </>
-              )
-            ) : (
-              <p
-                className="text-center text-sm md:text-base text-[#7A5C3E] mb-8 max-w-sm mx-auto"
-                style={{ fontFamily: "var(--font-body)" }}
-              >
-                Scan jouw eigen QR-code op het kaartje om je aan te melden
-              </p>
-            )}
-
-            {error && (
-              <p
-                className="text-center text-sm text-red-600 mt-3"
-                style={{ fontFamily: "var(--font-body)" }}
-              >
-                {error}
-              </p>
-            )}
-
-            {/* Divider */}
-            <div className="my-8 border-t border-dashed border-[#3D2817]/15" />
-
-            {/* Who's coming */}
-            <div className="flex items-baseline justify-between mb-4">
-              <p
-                className="text-[10px] md:text-xs font-semibold uppercase tracking-[0.28em] text-[#7A5C3E]"
-                style={{ fontFamily: "var(--font-body)" }}
-              >
-                Wie komen er
-              </p>
-              <p className="text-xs text-[#7A5C3E]" style={{ fontFamily: "var(--font-body)" }}>
-                {totalRsvpd} / {KIDS.length}
-              </p>
-            </div>
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-              {KIDS.map((kid) => {
-                const rsvp = rsvps[kid];
-                const isMe = kid === myKid;
-                return (
-                  <div
-                    key={kid}
-                    className={`relative px-2 py-2.5 rounded-lg text-center transition-all ${
-                      rsvp ? "bg-[#3D2817] text-[#FFF8EC]" : "bg-[#F0E2C8] text-[#7A5C3E]"
-                    } ${isMe ? "ring-2 ring-[#E5806A] ring-offset-2 ring-offset-[#FFF8EC]" : ""}`}
-                  >
-                    {rsvp && <span className="absolute -top-2 -right-1 text-xl">{rsvp.emoji}</span>}
-                    <span
-                      className="text-sm font-medium"
-                      style={{ fontFamily: "var(--font-body)" }}
-                    >
-                      {kid}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </motion.div>
-        </section>
+        <HeroCard countdown={countdown} />
+        <RsvpCard
+          myKid={myKid}
+          rsvps={rsvps}
+          selectedEmoji={selectedEmoji}
+          submitting={submitting}
+          error={error}
+          onSelectEmoji={setSelectedEmoji}
+          onSubmit={handleSubmit}
+        />
       </div>
     </main>
   );

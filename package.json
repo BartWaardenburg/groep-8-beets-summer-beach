@@ -10,7 +10,9 @@
     "format": "oxfmt --write .",
     "format:check": "oxfmt --check .",
     "analyze": "fallow",
-    "gen-urls": "node --env-file=.env.local --import tsx scripts/gen-urls.ts"
+    "gen-urls": "node --env-file=.env.local --import tsx scripts/gen-urls.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
@@ -32,6 +34,7 @@
     "oxlint": "^1.60.0",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.6"
   }
 }
