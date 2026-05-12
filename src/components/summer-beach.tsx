@@ -13,6 +13,7 @@ import {
   MapPin,
   SunHorizon,
 } from "@phosphor-icons/react";
+import { EMOJIS, KIDS, type RsvpMap } from "@/lib/kids";
 
 const ScrollMouse = () => (
   <div className="relative w-[14px] h-[22px] rounded-full border-[1.5px] border-current">
@@ -50,7 +51,6 @@ const ScrollCue = () => (
     </span>
   </>
 );
-import { EMOJIS, KIDS, type RsvpMap } from "@/lib/kids";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -644,9 +644,7 @@ export const SummerBeach = () => {
             className="fixed bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 rounded-full bg-[#FFF8EC]/95 backdrop-blur-md text-[#3D2817] shadow-[0_8px_28px_rgba(0,0,0,0.4)] px-5 py-2.5 pointer-events-none"
             style={{ fontFamily: "var(--font-body)" }}
           >
-            <span className="text-[10px] font-semibold uppercase tracking-[0.32em]">
-              Scroll
-            </span>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.32em]">Scroll</span>
             <ScrollCue />
           </motion.div>
         )}
