@@ -11,10 +11,13 @@ import {
   DeviceMobile,
   HandArrowDown,
   MapPin,
+  SpeakerHigh,
+  SpeakerSlash,
   Sparkle,
   SunHorizon,
 } from "@phosphor-icons/react";
 import { EMOJIS, KIDS, type RsvpMap } from "@/lib/kids";
+import { useScrollMusic } from "./use-scroll-music";
 
 const ScrollMouse = () => (
   <div className="relative w-[14px] h-[22px] rounded-full border-[1.5px] border-current">
@@ -76,6 +79,13 @@ if (typeof window !== "undefined") {
 }
 
 const PARTY_DATE = new Date("2026-07-15T19:00:00");
+
+// The ghettoblaster enters frame late in the scrub. The music crossfades from
+// the chill loop to the up-tempo loop across this window of *video* seconds
+// (the 60s clip maps 1:1 to scrub progress). Nudge these to match the exact
+// frame the boombox appears.
+const BOOMBOX_START_S = 36;
+const BOOMBOX_END_S = 50;
 
 const CONFETTI_COLORS = ["#FF6B6B", "#FFD93D", "#06D6A0", "#00B4D8", "#FF8C42", "#C77DFF"];
 
@@ -443,7 +453,11 @@ const RsvpCard = ({
   onSelectEmoji,
   onSubmit,
 }: RsvpCardProps) => {
-  const myRsvp = myKid ? (rsvps[myKid] ?? null) : null;
+  // No personal code = anonymous visitor. Hide the RSVP card (and the
+  // "Wie komen er?" grid) entirely; it only makes sense for an identified kid.
+  if (!myKid) return null;
+
+  const myRsvp = rsvps[myKid] ?? null;
 
   return (
     <section className="relative pt-8 pb-24 px-5 flex items-center justify-center">
@@ -454,27 +468,23 @@ const RsvpCard = ({
         transition={{ duration: 0.8 }}
         className="w-full max-w-2xl mx-auto bg-[#FFF8EC] rounded-[28px] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.7)] p-8 md:p-12"
       >
-        {myKid && (
-          <>
-            <RsvpAction
-              myKid={myKid}
-              myRsvp={myRsvp}
-              selectedEmoji={selectedEmoji}
-              submitting={submitting}
-              onSelectEmoji={onSelectEmoji}
-              onSubmit={onSubmit}
-            />
-            {error && (
-              <p
-                className="text-center text-sm text-red-600 mt-3"
-                style={{ fontFamily: "var(--font-body)" }}
-              >
-                {error}
-              </p>
-            )}
-            <div className="my-8 border-t border-dashed border-[#3D2817]/15" />
-          </>
+        <RsvpAction
+          myKid={myKid}
+          myRsvp={myRsvp}
+          selectedEmoji={selectedEmoji}
+          submitting={submitting}
+          onSelectEmoji={onSelectEmoji}
+          onSubmit={onSubmit}
+        />
+        {error && (
+          <p
+            className="text-center text-sm text-red-600 mt-3"
+            style={{ fontFamily: "var(--font-body)" }}
+          >
+            {error}
+          </p>
         )}
+        <div className="my-8 border-t border-dashed border-[#3D2817]/15" />
         <RsvpGrid rsvps={rsvps} myKid={myKid} />
       </motion.div>
     </section>
@@ -512,12 +522,30 @@ export const SummerBeach = () => {
   const [error, setError] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const { d, h, m, s } = useCountdown(PARTY_DATE);
+  const music = useScrollMusic({ startS: BOOMBOX_START_S, endS: BOOMBOX_END_S });
+  const { ready: musicReady, muted: musicMuted, toggle: toggleMusic, unlock: unlockMusic } = music;
+  const updateMusic = music.update;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 0);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  // Browsers block audio until a user gesture: unlock on the first interaction.
+  useEffect(() => {
+    if (musicReady) return;
+    const onGesture = () => unlockMusic();
+    const opts = { once: true, passive: true } as const;
+    document.addEventListener("pointerdown", onGesture, opts);
+    document.addEventListener("touchstart", onGesture, opts);
+    document.addEventListener("keydown", onGesture, opts);
+    return () => {
+      document.removeEventListener("pointerdown", onGesture);
+      document.removeEventListener("touchstart", onGesture);
+      document.removeEventListener("keydown", onGesture);
+    };
+  }, [musicReady, unlockMusic]);
 
   useEffect(() => {
     const code = new URLSearchParams(window.location.search).get("code");
@@ -613,6 +641,7 @@ export const SummerBeach = () => {
       gsap.to(video, {
         currentTime: video.duration,
         ease: "none",
+        onUpdate: () => updateMusic(video.currentTime),
         scrollTrigger: {
           trigger: scrub,
           start: "top top",
@@ -637,6 +666,24 @@ export const SummerBeach = () => {
     <main className="relative">
       <RotateHint />
       {showConfetti && <Confetti />}
+
+      {/* ===== Crossfaded music: chill loop → up-tempo when the boombox lands ===== */}
+      <audio ref={music.chillRef} src="/music-chill.mp3" loop preload="auto" />
+      <audio ref={music.partyRef} src="/music-party.mp3" loop preload="auto" />
+
+      <button
+        type="button"
+        onClick={toggleMusic}
+        aria-label={musicMuted ? "Muziek aanzetten" : "Muziek dempen"}
+        aria-pressed={!musicMuted}
+        className="fixed top-5 right-5 md:top-8 md:right-8 z-50 flex items-center justify-center w-11 h-11 rounded-full bg-[#FFF8EC]/95 backdrop-blur-md text-[#3D2817] shadow-[0_8px_28px_rgba(0,0,0,0.4)] cursor-pointer"
+      >
+        {musicMuted || !musicReady ? (
+          <SpeakerSlash size={20} weight="duotone" />
+        ) : (
+          <SpeakerHigh size={20} weight="duotone" />
+        )}
+      </button>
 
       {/* ===== Fixed video backdrop (scroll-scrubbed, freezes at last frame) ===== */}
       <video
