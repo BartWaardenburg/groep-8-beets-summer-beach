@@ -3,10 +3,8 @@
 import { type RefObject, useCallback, useEffect, useRef, useState } from "react";
 
 type Options = {
-  /** Video time (seconds) where the crossfade starts. */
-  startS: number;
-  /** Video time (seconds) where the crossfade completes (full party). */
-  endS: number;
+  /** Video time (seconds) at which the track switches chill -> party. */
+  atS: number;
   /** Peak volume of the active track (0..1). */
   maxVolume?: number;
 };
@@ -20,36 +18,41 @@ export type ScrollMusic = {
   toggle: () => void;
   /** Start playback. MUST be called from inside a user-gesture handler. */
   unlock: () => void;
-  /** Drive the crossfade from the scrubbed video time (seconds). */
+  /** Drive the switch from the scrubbed video time (seconds). */
   update: (videoSeconds: number) => void;
   chillRef: RefObject<HTMLAudioElement | null>;
   partyRef: RefObject<HTMLAudioElement | null>;
 };
 
 const STORAGE_KEY = "beets-music-muted";
-const RAMP_MS = 220;
-const HALF_PI = Math.PI / 2;
+const MUTE_RAMP_MS = 220;
+// A quick cut, not a crossfade: the two songs aren't beat-matched, so any real
+// overlap turns to mush. Old track ducks out over the first ~55%, new fades in
+// over the last ~50%, leaving only a sliver of overlap to mask the seam.
+const CUT_MS = 480;
+// Don't flip back to chill until a bit before the switch point, so wiggling the
+// scroll right on the threshold can't strobe the two tracks.
+const HYSTERESIS_S = 1;
 
-/** Smoothstep: 0 below edge0, 1 above edge1, eased in between. */
-const smoothstep = (edge0: number, edge1: number, x: number): number => {
-  if (edge1 <= edge0) return x < edge1 ? 0 : 1;
-  const t = Math.min(1, Math.max(0, (x - edge0) / (edge1 - edge0)));
-  return t * t * (3 - 2 * t);
-};
+const clamp01 = (x: number): number => Math.min(1, Math.max(0, x));
 
 /**
- * Crossfades two looping tracks based on the scroll-scrubbed video time, with a
- * user-toggleable master mute. Equal-power crossfade keeps perceived loudness
- * constant across the transition; no Web Audio graph, so it sidesteps the iOS
- * MediaElementSource silence bug.
+ * Hard-cuts between two looping tracks at a single scroll-scrubbed video time,
+ * with a user-toggleable master mute. The cut runs in real time (constant,
+ * snappy) regardless of scroll speed, so the up-tempo track drops in cleanly
+ * instead of smearing across a long volume crossfade. No Web Audio graph, so it
+ * sidesteps the iOS MediaElementSource silence bug.
  */
-export const useScrollMusic = ({ startS, endS, maxVolume = 0.6 }: Options): ScrollMusic => {
+export const useScrollMusic = ({ atS, maxVolume = 0.6 }: Options): ScrollMusic => {
   const chillRef = useRef<HTMLAudioElement | null>(null);
   const partyRef = useRef<HTMLAudioElement | null>(null);
 
   const masterRef = useRef(1); // 0 = muted, 1 = full
-  const mixRef = useRef(0); // 0 = all chill, 1 = all party
-  const rampRef = useRef<number | null>(null);
+  const chillVolRef = useRef(1); // per-track gain 0..1 (pre-master)
+  const partyVolRef = useRef(0);
+  const targetRef = useRef(0); // 0 = chill active, 1 = party active
+  const muteRafRef = useRef<number | null>(null);
+  const cutRafRef = useRef<number | null>(null);
   const readyRef = useRef(false);
 
   const [ready, setReady] = useState(false);
@@ -63,23 +66,42 @@ export const useScrollMusic = ({ startS, endS, maxVolume = 0.6 }: Options): Scro
     const party = partyRef.current;
     if (!chill || !party) return;
     const level = masterRef.current * maxVolume;
-    // Equal-power: cos/sin keep chill² + party² constant through the fade.
-    chill.volume = level * Math.cos(mixRef.current * HALF_PI);
-    party.volume = level * Math.sin(mixRef.current * HALF_PI);
+    chill.volume = level * chillVolRef.current;
+    party.volume = level * partyVolRef.current;
   }, [maxVolume]);
+
+  const cutTo = useCallback(
+    (target: number): void => {
+      if (cutRafRef.current !== null) cancelAnimationFrame(cutRafRef.current);
+      const incoming = target === 1 ? partyVolRef : chillVolRef;
+      const outgoing = target === 1 ? chillVolRef : partyVolRef;
+      const fromOut = outgoing.current;
+      const fromIn = incoming.current;
+      const start = performance.now();
+      const step = (now: number): void => {
+        const k = clamp01((now - start) / CUT_MS);
+        outgoing.current = fromOut * (1 - clamp01(k / 0.55));
+        incoming.current = fromIn + (1 - fromIn) * clamp01((k - 0.45) / 0.55);
+        apply();
+        cutRafRef.current = k < 1 ? requestAnimationFrame(step) : null;
+      };
+      cutRafRef.current = requestAnimationFrame(step);
+    },
+    [apply],
+  );
 
   const rampMaster = useCallback(
     (target: number): void => {
-      if (rampRef.current !== null) cancelAnimationFrame(rampRef.current);
+      if (muteRafRef.current !== null) cancelAnimationFrame(muteRafRef.current);
       const from = masterRef.current;
       const start = performance.now();
       const step = (now: number): void => {
-        const k = Math.min(1, (now - start) / RAMP_MS);
+        const k = clamp01((now - start) / MUTE_RAMP_MS);
         masterRef.current = from + (target - from) * k;
         apply();
-        rampRef.current = k < 1 ? requestAnimationFrame(step) : null;
+        muteRafRef.current = k < 1 ? requestAnimationFrame(step) : null;
       };
-      rampRef.current = requestAnimationFrame(step);
+      muteRafRef.current = requestAnimationFrame(step);
     },
     [apply],
   );
@@ -96,10 +118,16 @@ export const useScrollMusic = ({ startS, endS, maxVolume = 0.6 }: Options): Scro
 
   const update = useCallback(
     (videoSeconds: number): void => {
-      mixRef.current = smoothstep(startS, endS, videoSeconds);
-      apply();
+      const current = targetRef.current;
+      let next = current;
+      if (current === 0 && videoSeconds >= atS) next = 1;
+      else if (current === 1 && videoSeconds < atS - HYSTERESIS_S) next = 0;
+      if (next !== current) {
+        targetRef.current = next;
+        cutTo(next);
+      }
     },
-    [apply, startS, endS],
+    [atS, cutTo],
   );
 
   const toggle = useCallback((): void => {
@@ -116,7 +144,8 @@ export const useScrollMusic = ({ startS, endS, maxVolume = 0.6 }: Options): Scro
 
   useEffect(
     () => (): void => {
-      if (rampRef.current !== null) cancelAnimationFrame(rampRef.current);
+      if (muteRafRef.current !== null) cancelAnimationFrame(muteRafRef.current);
+      if (cutRafRef.current !== null) cancelAnimationFrame(cutRafRef.current);
     },
     [],
   );

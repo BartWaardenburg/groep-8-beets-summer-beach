@@ -80,12 +80,10 @@ if (typeof window !== "undefined") {
 
 const PARTY_DATE = new Date("2026-07-15T19:00:00");
 
-// The ghettoblaster enters frame late in the scrub. The music crossfades from
-// the chill loop to the up-tempo loop across this window of *video* seconds
-// (the 60s clip maps 1:1 to scrub progress). Nudge these to match the exact
-// frame the boombox appears.
-const BOOMBOX_START_S = 36;
-const BOOMBOX_END_S = 50;
+// The ghettoblaster enters frame here (in *video* seconds; the 60s clip maps
+// 1:1 to scrub progress). At this point the music quick-cuts from the chill
+// loop to the up-tempo loop. Nudge to match the exact frame the boombox lands.
+const BOOMBOX_AT_S = 40;
 
 const CONFETTI_COLORS = ["#FF6B6B", "#FFD93D", "#06D6A0", "#00B4D8", "#FF8C42", "#C77DFF"];
 
@@ -522,7 +520,7 @@ export const SummerBeach = () => {
   const [error, setError] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const { d, h, m, s } = useCountdown(PARTY_DATE);
-  const music = useScrollMusic({ startS: BOOMBOX_START_S, endS: BOOMBOX_END_S });
+  const music = useScrollMusic({ atS: BOOMBOX_AT_S });
   const { ready: musicReady, muted: musicMuted, toggle: toggleMusic, unlock: unlockMusic } = music;
   const updateMusic = music.update;
 
