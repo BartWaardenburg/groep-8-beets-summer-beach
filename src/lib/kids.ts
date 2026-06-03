@@ -25,6 +25,8 @@ export const KIDS = [
   "Storm",
   "Sverre",
   "Tijn",
+  "Juf Anne",
+  "Juf Anouk",
 ] as const;
 
 export type Kid = (typeof KIDS)[number];

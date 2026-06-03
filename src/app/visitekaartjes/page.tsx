@@ -253,11 +253,11 @@ const BARCODE = [
 ];
 
 type Props = {
-  searchParams: Promise<{ base?: string; token?: string }>;
+  searchParams: Promise<{ base?: string; token?: string; only?: string }>;
 };
 
 const VisitekaartjesPage = async ({ searchParams }: Props) => {
-  const { base, token } = await searchParams;
+  const { base, token, only } = await searchParams;
 
   // This page lists every kid's personal RSVP code, so it must not be public.
   const cardsToken = process.env.CARDS_TOKEN;
@@ -268,8 +268,19 @@ const VisitekaartjesPage = async ({ searchParams }: Props) => {
   const baseUrl = (base ?? process.env.BASE_URL ?? PROD_BASE).replace(/\/$/, "");
   const codes = allCodes();
 
+  // `?only=Juf Anne,Juf Anouk` prints just those cards (case-insensitive),
+  // handy for reprinting late additions without redoing the whole sheet.
+  const wanted = only
+    ?.split(",")
+    .map((n) => n.trim().toLowerCase())
+    .filter(Boolean);
+  const selected =
+    wanted && wanted.length > 0
+      ? KIDS.filter((kid) => wanted.includes(kid.toLowerCase()))
+      : KIDS;
+
   const cards = await Promise.all(
-    KIDS.map(async (kid) => {
+    selected.map(async (kid) => {
       const url = `${baseUrl}/?code=${codes[kid]}`;
       const svg = await QRCode.toString(url, {
         type: "svg",
@@ -289,7 +300,7 @@ const VisitekaartjesPage = async ({ searchParams }: Props) => {
         <div>
           <h1>VIP Visitekaartjes</h1>
           <p>
-            {KIDS.length} kaartjes · QR linkt naar {baseUrl}
+            {cards.length} kaartjes · QR linkt naar {baseUrl}
           </p>
         </div>
         <p className="print-hint">Druk op ⌘P / Ctrl+P om te printen</p>
