@@ -43,7 +43,10 @@ export const useScrollCues = (cues: readonly Cue[]): ScrollCues => {
       const el = refs.current[i];
       if (!el) return;
       el.currentTime = 0;
-      el.volume = mutedRef.current ? 0 : (cues[i]?.volume ?? 0.85);
+      // `.muted` is the gate iOS Safari actually honours; `.volume` is the
+      // per-cue level for every other browser (iOS ignores it).
+      el.muted = mutedRef.current;
+      el.volume = cues[i]?.volume ?? 0.85;
       void el.play().catch(() => {});
     },
     [cues],
@@ -62,14 +65,13 @@ export const useScrollCues = (cues: readonly Cue[]): ScrollCues => {
       // Later cues: prime muted so a programmatic play() works without a gesture.
       const el = refs.current[i];
       if (!el) return;
-      const restore = el.volume;
-      el.volume = 0;
+      el.muted = true;
       void el
         .play()
         .then(() => {
           el.pause();
           el.currentTime = 0;
-          el.volume = restore;
+          el.muted = mutedRef.current;
         })
         .catch(() => {});
     });
@@ -97,10 +99,10 @@ export const useScrollCues = (cues: readonly Cue[]): ScrollCues => {
 
   const setMuted = useCallback((muted: boolean): void => {
     mutedRef.current = muted;
-    if (!muted) return;
-    // Hard-silence anything currently sounding; played-from-mute stays muted.
+    // Flip `.muted` on every cue element (the gate iOS honours), so toggling
+    // mute silences anything currently sounding and arms future one-shots.
     for (const el of refs.current) {
-      if (el) el.volume = 0;
+      if (el) el.muted = muted;
     }
   }, []);
 

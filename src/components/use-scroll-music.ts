@@ -33,6 +33,10 @@ const CUT_MS = 480;
 // Don't flip back to chill until a bit before the switch point, so wiggling the
 // scroll right on the threshold can't strobe the two tracks.
 const HYSTERESIS_S = 1;
+// iOS Safari ignores `audio.volume` (playback is always at the device volume),
+// so a track parked at volume 0 still blares. `.muted` *is* honoured there, so
+// we also gate each track's `.muted` on its effective gain dropping to ~silent.
+const AUDIBLE_EPS = 0.004;
 
 const clamp01 = (x: number): number => Math.min(1, Math.max(0, x));
 
@@ -66,8 +70,15 @@ export const useScrollMusic = ({ atS, maxVolume = 0.6 }: Options): ScrollMusic =
     const party = partyRef.current;
     if (!chill || !party) return;
     const level = masterRef.current * maxVolume;
-    chill.volume = level * chillVolRef.current;
-    party.volume = level * partyVolRef.current;
+    const chillGain = level * chillVolRef.current;
+    const partyGain = level * partyVolRef.current;
+    chill.volume = chillGain;
+    party.volume = partyGain;
+    // The `.muted` gate is what actually keeps iOS from playing the inactive
+    // track (or a muted master) at full device volume; `.volume` above is the
+    // fine mix that browsers other than iOS Safari honour.
+    chill.muted = chillGain <= AUDIBLE_EPS;
+    party.muted = partyGain <= AUDIBLE_EPS;
   }, [maxVolume]);
 
   const cutTo = useCallback(
