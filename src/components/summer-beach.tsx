@@ -18,6 +18,7 @@ import {
 } from "@phosphor-icons/react";
 import { EMOJIS, KIDS, type RsvpMap } from "@/lib/kids";
 import { useScrollMusic } from "./use-scroll-music";
+import { type Cue, useScrollCues } from "./use-scroll-cues";
 
 const ScrollMouse = () => (
   <div className="relative w-[14px] h-[22px] rounded-full border-[1.5px] border-current">
@@ -84,6 +85,18 @@ const PARTY_DATE = new Date("2026-07-15T19:00:00");
 // 1:1 to scrub progress). At this point the music quick-cuts from the chill
 // loop to the up-tempo loop. Nudge to match the exact frame the boombox lands.
 const BOOMBOX_AT_S = 40;
+
+// Original clip audio, fired as one-shots at the *video* second its visual
+// lands. Layered on top of the (quieter) music bed. The plane opens the reel
+// at 0s; the waves swell as the clouds part; a water splash lands as the
+// "Summer Beach Party" title drops in, with a soft confetti pop just after.
+// atS values track the scrub frames in the contact sheet.
+const CUES: readonly Cue[] = [
+  { atS: 0, src: "/sfx-airplane.mp3", volume: 0.9 },
+  { atS: 6, src: "/sfx-beach-reveal.mp3", volume: 0.8 },
+  { atS: 24.21, src: "/sfx-splash.mp3", volume: 0.9 },
+  { atS: 29.73, src: "/sfx-confetti.mp3", volume: 0.4 },
+];
 
 const CONFETTI_COLORS = ["#FF6B6B", "#FFD93D", "#06D6A0", "#00B4D8", "#FF8C42", "#C77DFF"];
 
@@ -520,9 +533,12 @@ export const SummerBeach = () => {
   const [error, setError] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const { d, h, m, s } = useCountdown(PARTY_DATE);
-  const music = useScrollMusic({ atS: BOOMBOX_AT_S });
+  // Bed sits quieter so the original clip audio reads on top of it.
+  const music = useScrollMusic({ atS: BOOMBOX_AT_S, maxVolume: 0.42 });
   const { ready: musicReady, muted: musicMuted, toggle: toggleMusic, unlock: unlockMusic } = music;
   const updateMusic = music.update;
+  const cues = useScrollCues(CUES);
+  const { update: updateCues, unlock: unlockCues, setMuted: setCuesMuted } = cues;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 0);
@@ -533,7 +549,10 @@ export const SummerBeach = () => {
   // Browsers block audio until a user gesture: unlock on the first interaction.
   useEffect(() => {
     if (musicReady) return;
-    const onGesture = () => unlockMusic();
+    const onGesture = () => {
+      unlockMusic();
+      unlockCues();
+    };
     const opts = { once: true, passive: true } as const;
     document.addEventListener("pointerdown", onGesture, opts);
     document.addEventListener("touchstart", onGesture, opts);
@@ -543,7 +562,12 @@ export const SummerBeach = () => {
       document.removeEventListener("touchstart", onGesture);
       document.removeEventListener("keydown", onGesture);
     };
-  }, [musicReady, unlockMusic]);
+  }, [musicReady, unlockMusic, unlockCues]);
+
+  // Keep the SFX layer's mute in lock-step with the music toggle.
+  useEffect(() => {
+    setCuesMuted(musicMuted);
+  }, [musicMuted, setCuesMuted]);
 
   useEffect(() => {
     const code = new URLSearchParams(window.location.search).get("code");
@@ -639,7 +663,10 @@ export const SummerBeach = () => {
       gsap.to(video, {
         currentTime: video.duration,
         ease: "none",
-        onUpdate: () => updateMusic(video.currentTime),
+        onUpdate: () => {
+          updateMusic(video.currentTime);
+          updateCues(video.currentTime);
+        },
         scrollTrigger: {
           trigger: scrub,
           start: "top top",
@@ -665,9 +692,14 @@ export const SummerBeach = () => {
       <RotateHint />
       {showConfetti && <Confetti />}
 
-      {/* ===== Crossfaded music: chill loop → up-tempo when the boombox lands ===== */}
+      {/* ===== Music bed: chill loop → up-tempo when the boombox lands ===== */}
       <audio ref={music.chillRef} src="/music-chill.mp3" loop preload="auto" />
       <audio ref={music.partyRef} src="/music-party.mp3" loop preload="auto" />
+
+      {/* ===== Original clip audio, one-shot per scroll cue, on top of the bed ===== */}
+      {CUES.map((cue, i) => (
+        <audio key={cue.src} ref={cues.setRef(i)} src={cue.src} preload="auto" />
+      ))}
 
       <button
         type="button"
