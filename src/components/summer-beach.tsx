@@ -744,10 +744,9 @@ export const SummerBeach = () => {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.45, duration: 0.5 }}
-            className="flex max-w-xs items-center gap-2 rounded-2xl bg-[#2B1B0E]/70 backdrop-blur-md px-4 py-2.5 text-center text-[11px] md:text-xs font-medium leading-snug text-[#FFF8EC]"
+            className="max-w-xs rounded-2xl bg-[#2B1B0E]/70 backdrop-blur-md px-4 py-2.5 text-center text-[11px] md:text-xs font-medium leading-snug text-[#FFF8EC]"
             style={{ fontFamily: "var(--font-body)" }}
           >
-            <SpeakerHigh size={16} weight="fill" className="shrink-0 text-[#E5806A]" />
             Tik op de knop en zet het geluid van je apparaat aan
           </motion.p>
         </div>
