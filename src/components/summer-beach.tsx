@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
@@ -535,7 +535,7 @@ export const SummerBeach = () => {
   const { d, h, m, s } = useCountdown(PARTY_DATE);
   // Bed sits quieter so the original clip audio reads on top of it.
   const music = useScrollMusic({ atS: BOOMBOX_AT_S, maxVolume: 0.42 });
-  const { ready: musicReady, muted: musicMuted, toggle: toggleMusic, unlock: unlockMusic } = music;
+  const { ready: musicReady, muted: musicMuted, toggle: toggleMusic, enable: enableMusic } = music;
   const updateMusic = music.update;
   const cues = useScrollCues(CUES);
   const { update: updateCues, unlock: unlockCues, setMuted: setCuesMuted } = cues;
@@ -546,23 +546,18 @@ export const SummerBeach = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Browsers block audio until a user gesture: unlock on the first interaction.
-  useEffect(() => {
-    if (musicReady) return;
-    const onGesture = () => {
-      unlockMusic();
-      unlockCues();
-    };
-    const opts = { once: true, passive: true } as const;
-    document.addEventListener("pointerdown", onGesture, opts);
-    document.addEventListener("touchstart", onGesture, opts);
-    document.addEventListener("keydown", onGesture, opts);
-    return () => {
-      document.removeEventListener("pointerdown", onGesture);
-      document.removeEventListener("touchstart", onGesture);
-      document.removeEventListener("keydown", onGesture);
-    };
-  }, [musicReady, unlockMusic, unlockCues]);
+  // Audio stays silent until the visitor opts in. The prominent button is both
+  // the unlock gesture and the master toggle: the first press starts the music
+  // bed and the intro airplane with sound on; later presses mute/unmute.
+  const handleAudio = useCallback(() => {
+    if (musicReady) {
+      toggleMusic();
+      return;
+    }
+    setCuesMuted(false);
+    enableMusic();
+    unlockCues();
+  }, [musicReady, toggleMusic, enableMusic, setCuesMuted, unlockCues]);
 
   // Keep the SFX layer's mute in lock-step with the music toggle.
   useEffect(() => {
@@ -701,19 +696,53 @@ export const SummerBeach = () => {
         <audio key={cue.src} ref={cues.setRef(i)} src={cue.src} preload="auto" />
       ))}
 
-      <button
-        type="button"
-        onClick={toggleMusic}
-        aria-label={musicMuted ? "Muziek aanzetten" : "Muziek dempen"}
-        aria-pressed={!musicMuted}
-        className="fixed top-5 right-5 md:top-8 md:right-8 z-50 flex items-center justify-center w-11 h-11 rounded-full bg-[#FFF8EC]/95 backdrop-blur-md text-[#3D2817] shadow-[0_8px_28px_rgba(0,0,0,0.4)] cursor-pointer"
-      >
-        {musicMuted || !musicReady ? (
-          <SpeakerSlash size={20} weight="duotone" />
-        ) : (
-          <SpeakerHigh size={20} weight="duotone" />
-        )}
-      </button>
+      {musicReady || scrolled ? (
+        <motion.button
+          layoutId="audio-toggle"
+          type="button"
+          onClick={handleAudio}
+          aria-label={
+            !musicReady ? "Zet het geluid aan" : musicMuted ? "Muziek aanzetten" : "Muziek dempen"
+          }
+          aria-pressed={musicReady ? !musicMuted : undefined}
+          className="fixed top-5 right-5 md:top-8 md:right-8 z-50 flex items-center justify-center w-11 h-11 rounded-full bg-[#FFF8EC]/95 backdrop-blur-md text-[#3D2817] shadow-[0_8px_28px_rgba(0,0,0,0.4)] cursor-pointer"
+          transition={{ layout: { type: "spring", stiffness: 320, damping: 32 } }}
+        >
+          {!musicReady || musicMuted ? (
+            <SpeakerSlash size={20} weight="duotone" />
+          ) : (
+            <SpeakerHigh size={20} weight="duotone" />
+          )}
+        </motion.button>
+      ) : (
+        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+          <motion.button
+            layoutId="audio-toggle"
+            type="button"
+            onClick={handleAudio}
+            aria-label="Zet het geluid aan"
+            className="pointer-events-auto flex items-center gap-3 rounded-full bg-[#FFF8EC]/95 backdrop-blur-md text-[#3D2817] px-6 py-4 cursor-pointer"
+            animate={{
+              boxShadow: [
+                "0 12px 32px rgba(0,0,0,0.45), 0 0 0 0 rgba(229,128,106,0.5)",
+                "0 12px 32px rgba(0,0,0,0.45), 0 0 0 20px rgba(229,128,106,0)",
+              ],
+            }}
+            transition={{
+              layout: { type: "spring", stiffness: 320, damping: 32 },
+              boxShadow: { duration: 1.8, repeat: Infinity, ease: "easeOut" },
+            }}
+          >
+            <SpeakerHigh size={26} weight="duotone" className="text-[#E5806A]" />
+            <span
+              className="text-xs md:text-sm font-semibold uppercase tracking-[0.18em]"
+              style={{ fontFamily: "var(--font-body)" }}
+            >
+              Zet het geluid aan
+            </span>
+          </motion.button>
+        </div>
+      )}
 
       {/* ===== Fixed video backdrop (scroll-scrubbed, freezes at last frame) ===== */}
       <video

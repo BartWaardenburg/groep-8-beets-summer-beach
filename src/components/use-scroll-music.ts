@@ -16,6 +16,8 @@ export type ScrollMusic = {
   ready: boolean;
   /** Toggle mute. Unlocks playback on the first call (it is a user gesture). */
   toggle: () => void;
+  /** Start playback with sound on (the "enable sound" opt-in). User gesture. */
+  enable: () => void;
   /** Start playback. MUST be called from inside a user-gesture handler. */
   unlock: () => void;
   /** Drive the switch from the scrubbed video time (seconds). */
@@ -127,6 +129,22 @@ export const useScrollMusic = ({ atS, maxVolume = 0.6 }: Options): ScrollMusic =
     setReady(true);
   }, [apply, muted]);
 
+  // Unlock *and* force sound on, regardless of any stored mute preference. This
+  // is the prominent "enable sound" action, distinct from the mute toggle.
+  const enable = useCallback((): void => {
+    if (typeof window !== "undefined") window.localStorage.setItem(STORAGE_KEY, "0");
+    setMuted(false);
+    if (muteRafRef.current !== null) cancelAnimationFrame(muteRafRef.current);
+    masterRef.current = 1;
+    if (!readyRef.current) {
+      readyRef.current = true;
+      void chillRef.current?.play().catch(() => {});
+      void partyRef.current?.play().catch(() => {});
+      setReady(true);
+    }
+    apply();
+  }, [apply]);
+
   const update = useCallback(
     (videoSeconds: number): void => {
       const current = targetRef.current;
@@ -161,5 +179,5 @@ export const useScrollMusic = ({ atS, maxVolume = 0.6 }: Options): ScrollMusic =
     [],
   );
 
-  return { muted, ready, toggle, unlock, update, chillRef, partyRef };
+  return { muted, ready, toggle, enable, unlock, update, chillRef, partyRef };
 };
