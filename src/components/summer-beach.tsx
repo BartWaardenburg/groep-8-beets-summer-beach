@@ -89,13 +89,12 @@ const BOOMBOX_AT_S = 40;
 // Original clip audio, fired as one-shots at the *video* second its visual
 // lands. Layered on top of the (quieter) music bed. The plane opens the reel
 // at 0s; the waves swell as the clouds part; a water splash lands as the
-// "Summer Beach Party" title drops in, with a soft confetti pop just after.
-// atS values track the scrub frames in the contact sheet.
+// "Summer Beach Party" title drops in. atS values track the scrub frames in
+// the contact sheet.
 const CUES: readonly Cue[] = [
   { atS: 0, src: "/sfx-airplane.mp3", volume: 0.9 },
   { atS: 6, src: "/sfx-beach-reveal.mp3", volume: 0.8 },
   { atS: 24.21, src: "/sfx-splash.mp3", volume: 0.9 },
-  { atS: 29.73, src: "/sfx-confetti.mp3", volume: 0.4 },
 ];
 
 const CONFETTI_COLORS = ["#FF6B6B", "#FFD93D", "#06D6A0", "#00B4D8", "#FF8C42", "#C77DFF"];
