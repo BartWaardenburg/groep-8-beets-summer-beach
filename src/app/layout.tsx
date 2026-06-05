@@ -19,6 +19,8 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://groep-8-beets-summer-beach.vercel.app"),
   title: "Summer Beach Party | Groep 8 Eindfeest",
   description: DESCRIPTION,
+  // Private kids' party: keep it out of search results.
+  robots: { index: false, follow: false },
   applicationName: "Beach Party",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
